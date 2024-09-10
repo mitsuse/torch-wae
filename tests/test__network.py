@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import torch
+
 from torch_wae.network import WAENet
 
 
