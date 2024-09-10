@@ -1,0 +1,30 @@
+[project]
+name = "wae"
+version = "0.1.0"
+description = "Short-time word audio encoder implemented in PyTorch."
+authors = [
+    {name = "Tomoya Kose", email = "tomoya@mitsuse.jp"},
+]
+dependencies = [
+    "torch>=2.3.1",
+    "torchaudio>=2.3.1",
+    "typer-slim>=0.12.5",
+    "numpy>=2.0.0",
+    "pydantic>=2.8.2",
+    "onnx>=1.16.1",
+    "convmelspec @ git+https://github.com/adobe-research/convmelspec@4c797b24175df51431ceb374ee57843e1cb2eaf0",
+]
+requires-python = ">=3.12,<3.13"
+readme = "README.md"
+license = {file = "LICENSE"}
+
+[project.scripts]
+export_to_onnx = "torch_wae.cli.export_to_onnx:app"
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "mypy>=1.10.1",
+    "ruff>=0.5.1",
+    "isort>=5.13.2",
+    "pytest>=8.2.2",
+]
