@@ -4,8 +4,9 @@ from pathlib import Path
 
 import torch
 import typer
-from torch_wae.network import WAENet
 from torchaudio import functional as F
+
+from torch_wae.network import WAENet
 
 app = typer.Typer()
 
