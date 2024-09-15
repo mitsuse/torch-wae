@@ -4,6 +4,7 @@ import torch
 from convmelspec.stft import ConvertibleSpectrogram as Spectrogram
 from torch import nn
 from torch.nn import functional as F
+from torchaudio import functional as FA
 
 
 # Wowrd Audio Encoder - A network for audio similar to MobileNet V2 for images.
@@ -137,3 +138,16 @@ class L2Normalize(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return F.normalize(x, p=2, dim=self.dim, eps=self.eps)
+
+
+class WithResample(torch.nn.Module):
+    def __init__(self, f: WAENet, sample_rate: int) -> None:
+        super().__init__()
+
+        self.f = f
+        self.sample_rate = sample_rate
+
+    def forward(self, waveform: torch.Tensor) -> torch.Tensor:
+        h = FA.resample(waveform, self.sample_rate, self.f.SAMPLE_RATE)
+        z = self.f(h)
+        return z
