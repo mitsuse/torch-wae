@@ -29,20 +29,31 @@ def omit_silence(
     return waveform
 
 
+def add_noise(
+    random: Random,
+    min_noise: float,
+    max_noise: float,
+    waveform: torch.Tensor,
+) -> torch.Tensor:
+    noise_level = min_noise + random.random() * max(0.0, max_noise - min_noise)
+    noise = torch.randn_like(waveform) * noise_level
+    return waveform + noise
+
+
 def crop_randomly(
-    x: torch.Tensor,
     random: Random,
     sample_rate: int,
     durations: int,
+    waveform: torch.Tensor,
 ) -> torch.Tensor:
-    c, d = x.shape
+    c, d = waveform.shape
     size = sample_rate * durations
     pad = max(0, size - d)
 
     if pad == 0:
         start = random.randint(0, d - size)
         end = start + size
-        return x[:, start:end]
+        return waveform[:, start:end]
     else:
-        p = torch.zeros((c, pad), dtype=x.dtype).to(x.device)
-        return torch.cat((x, p), dim=-1)
+        p = torch.zeros((c, pad), dtype=waveform.dtype).to(waveform.device)
+        return torch.cat((waveform, p), dim=-1)
