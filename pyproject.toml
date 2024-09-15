@@ -20,6 +20,7 @@ license = {file = "LICENSE"}
 
 [project.scripts]
 export_to_onnx = "torch_wae.cli.export_to_onnx:app"
+generate_pair = "torch_wae.cli.generate_pair:app"
 
 [tool.pdm.dev-dependencies]
 dev = [
@@ -28,3 +29,6 @@ dev = [
     "isort>=5.13.2",
     "pytest>=8.2.2",
 ]
+
+[tool.isort]
+profile = "black"
