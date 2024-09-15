@@ -54,7 +54,7 @@ class ClassificationDataset(data.Dataset):
         return self.__root
 
 
-class Pairataset(data.Dataset):
+class PairDataset(data.Dataset):
     def __init__(self, annotation: Path, root: Path) -> None:
         super().__init__()
 
