@@ -4,9 +4,8 @@ from pathlib import Path
 
 import torch
 import typer
-from torchaudio import functional as F
 
-from torch_wae.network import WAENet
+from torch_wae.network import WAENet, WithResample
 
 app = typer.Typer()
 
@@ -49,19 +48,6 @@ def main(
             "z": {0: "batch_size"},
         },
     )
-
-
-class WithResample(torch.nn.Module):
-    def __init__(self, f: WAENet, sample_rate: int) -> None:
-        super().__init__()
-
-        self.f = f
-        self.sample_rate = sample_rate
-
-    def forward(self, waveform: torch.Tensor) -> torch.Tensor:
-        h = F.resample(waveform, self.sample_rate, self.f.SAMPLE_RATE)
-        z = self.f(h)
-        return z
 
 
 if __name__ == "__main__":
