@@ -57,3 +57,13 @@ def crop_randomly(
     else:
         p = torch.zeros((c, pad), dtype=waveform.dtype).to(waveform.device)
         return torch.cat((waveform, p), dim=-1)
+
+
+def gain_randomly(
+    min_: float,
+    max_: float,
+    waveform: torch.Tensor,
+) -> torch.Tensor:
+    assert min_ <= max_
+    s = (max_ - min_) * torch.rand(()) + min_
+    return waveform * s
