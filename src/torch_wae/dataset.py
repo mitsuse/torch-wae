@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Callable, Generic, Protocol, Sized, TypeVar
 
@@ -34,19 +35,21 @@ class ClassificationDataset(data.Dataset):
         self.__root = root
 
         with annotation.open() as f:
-            self.__seq_line = tuple(line.strip() for line in f)
+            self.__annotations = ClassificationDatasetJson(**json.load(f))
 
     def __len__(self) -> int:
-        return len(self.__seq_line)
+        return len(self.__annotations.examples)
 
     def __getitem__(self, index: int) -> ClassificationJson:
-        import json
-
-        return ClassificationJson(**json.loads(self.__seq_line[index]))
+        return self.__annotations.examples[index]
 
     @property
     def root(self) -> Path:
         return self.__root
+
+    @property
+    def classes(self) -> tuple[str, ...]:
+        return self.__annotations.classes
 
 
 class PairDataset(data.Dataset):
@@ -62,8 +65,6 @@ class PairDataset(data.Dataset):
         return len(self.__seq_line)
 
     def __getitem__(self, index: int) -> PairJson:
-        import json
-
         return PairJson(**json.loads(self.__seq_line[index]))
 
     @property
