@@ -16,11 +16,6 @@ class PairJson:
 
 
 @dataclass(frozen=True)
-class PairDatasetJson:
-    examples: tuple[PairJson, ...]
-
-
-@dataclass(frozen=True)
 class ClassificationJson:
     path: str
     class_id: int
