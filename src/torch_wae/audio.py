@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from random import Random
-
 import torch
+
+from torch_wae.rand import Random
 
 
 def omit_silence(
@@ -67,3 +67,20 @@ def gain_randomly(
     assert min_ <= max_
     s = (max_ - min_) * torch.rand(()) + min_
     return waveform * s
+
+
+def mask_randomly(
+    random: Random,
+    sample_rate: int,
+    durations: float,
+    waveform: torch.Tensor,
+) -> torch.Tensor:
+    _, d = waveform.shape
+    size = min(d, int(sample_rate * durations))
+    start = random.randint(0, d - size)
+    end = start + size
+
+    w = torch.clone(waveform)
+    w[:, start:end] = 0
+
+    return w
