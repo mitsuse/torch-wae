@@ -22,6 +22,11 @@ license = {file = "LICENSE"}
 export_to_onnx = "torch_wae.cli.export_to_onnx:app"
 generate_pair = "torch_wae.cli.generate_pair:app"
 
+[tool.pdm]
+include = [
+  "src/torch_wae/py.typed",
+]
+
 [tool.pdm.dev-dependencies]
 dev = [
     "mypy>=1.10.1",
