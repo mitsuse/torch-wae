@@ -1,6 +1,6 @@
 [project]
 name = "torch-wae"
-version = "0.1.8"
+version = "0.1.9"
 description = "Short-time word audio encoder based on metric learning implemented in PyTorch."
 authors = [
     {name = "Tomoya Kose", email = "tomoya@mitsuse.jp"},
