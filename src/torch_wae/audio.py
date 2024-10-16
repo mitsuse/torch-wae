@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import torch
+from torchaudio import functional as F
 
 from torch_wae.rand import Random
 
@@ -84,3 +85,11 @@ def mask_randomly(
     w[:, start:end] = 0
 
     return w
+
+
+def reverb(
+    rir: torch.Tensor,
+    waveform: torch.Tensor,
+) -> torch.Tensor:
+    rir = rir / torch.linalg.vector_norm(rir, ord=2)
+    return F.fftconvolve(waveform, rir, mode="same")
