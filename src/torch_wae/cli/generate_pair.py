@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from random import Random
+from typing import Optional
 
 import typer
 
@@ -20,6 +21,10 @@ def generate_pair(
         20240820,
         help="the random seed",
     ),
+    max_classes: Optional[int] = typer.Option(
+        ...,
+        help="",
+    ),
     annotation: Path = typer.Option(
         ...,
         help="the path of an annotation file for classification",
@@ -37,6 +42,13 @@ def generate_pair(
     with annotation.open() as f:
         dataset = ClassificationDatasetJson(**json.load(f))
 
+    if max_classes is None:
+        classes = dataset.classes
+    else:
+        classes = tuple(random.sample(dataset.classes, max_classes))
+
+    set_classes = frozenset(classes)
+
     n_class = len(dataset.classes)
     n_example = len(dataset.examples)
 
@@ -46,7 +58,8 @@ def generate_pair(
 
     with tqdm(total=n_example) as progress:
         for example in dataset.examples:
-            group_example[example.class_id].append(example)
+            if dataset.classes[example.class_id] in set_classes:
+                group_example[example.class_id].append(example)
 
             progress.update(1)
 
