@@ -19,6 +19,7 @@ readme = "README.md"
 license = {file = "LICENSE"}
 
 [project.scripts]
+copy_dataset = "torch_wae.cli.copy_dataset:app"
 export_to_onnx = "torch_wae.cli.export_to_onnx:app"
 generate_pair = "torch_wae.cli.generate_pair:app"
 
