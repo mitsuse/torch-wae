@@ -25,9 +25,9 @@ def main(
         help="the output path of a model converted for ONNX",
     ),
 ) -> None:
-    assert sample_rate >= WAENet.SAMPLE_RATE
-
     f = WAENet(s=1)
+    assert sample_rate >= f.preprocess.SAMPLE_RATE
+
     f.load_state_dict(torch.load(pt))
     f.train(False)
 
