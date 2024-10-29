@@ -170,7 +170,7 @@ class LightUNet(nn.Module):
             nn.Conv2d(1 * s, 1 * s, 3, stride=1, padding=1),
             nn.BatchNorm2d(1 * s),
             nn.LeakyReLU(),
-            nn.Conv2d(1 * s, 1, 1, stride=1),
+            nn.Conv2d(1 * s, 1, 3, stride=1, padding=1),
         )
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
@@ -184,7 +184,7 @@ class LightUNet(nn.Module):
         h_6 = self.decode_2(h_5 + h_1)
         h_7 = self.decode_3(h_6 + h_0)
 
-        return self.refine(h_7)
+        return self.refine(h_7 + x)
 
 
 class Preprocess(nn.Module):
