@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.2"
-content_hash = "sha256:c2fbbe12141672c324314070f4d4297ed96f93fc058f74bc5f0730b47095774e"
+content_hash = "sha256:bc21bb86cbdeac434b28a209eed4f2dbbeaac08db99695268937df79c43d643c"
 
 [[package]]
 name = "annotated-types"
@@ -38,6 +38,16 @@ groups = ["default"]
 files = [
     {file = "audioread-3.0.1-py3-none-any.whl", hash = "sha256:4cdce70b8adc0da0a3c9e0d85fb10b3ace30fbdf8d1670fd443929b61d117c33"},
     {file = "audioread-3.0.1.tar.gz", hash = "sha256:ac5460a5498c48bdf2e8e767402583a4dcd13f4414d286f42ce4379e8b35066d"},
+]
+
+[[package]]
+name = "braceexpand"
+version = "0.1.7"
+summary = "Bash-style brace expansion for Python"
+groups = ["default"]
+files = [
+    {file = "braceexpand-0.1.7-py2.py3-none-any.whl", hash = "sha256:91332d53de7828103dcae5773fb43bc34950b0c8160e35e0f44c4427a3b85014"},
+    {file = "braceexpand-0.1.7.tar.gz", hash = "sha256:e6e539bd20eaea53547472ff94f4fb5c3d3bf9d0a89388c4b56663aba765f705"},
 ]
 
 [[package]]
@@ -1160,4 +1170,20 @@ groups = ["default"]
 files = [
     {file = "urllib3-2.2.2-py3-none-any.whl", hash = "sha256:a448b2f64d686155468037e1ace9f2d2199776e17f0a46610480d311f73e3472"},
     {file = "urllib3-2.2.2.tar.gz", hash = "sha256:dd505485549a7a552833da5e6063639d0d177c04f23bc3864e41e5dc5f612168"},
+]
+
+[[package]]
+name = "webdataset"
+version = "0.2.100"
+requires_python = ">=3.6"
+summary = "Record sequential storage for deep learning."
+groups = ["default"]
+dependencies = [
+    "braceexpand",
+    "numpy",
+    "pyyaml",
+]
+files = [
+    {file = "webdataset-0.2.100-py3-none-any.whl", hash = "sha256:f70a8e1f6d4f5268b364bd6f77fe8a1168ea14e7e9ed455d71f8d29585fd86af"},
+    {file = "webdataset-0.2.100.tar.gz", hash = "sha256:798e30ff700277f0b963dc0395f3b9de4971a67cffc7cb6d0cb9225df7b68e42"},
 ]
