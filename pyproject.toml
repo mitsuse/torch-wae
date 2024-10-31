@@ -13,12 +13,15 @@ dependencies = [
     "pydantic>=2.8.2",
     "onnx>=1.16.1",
     "convmelspec @ git+https://github.com/adobe-research/convmelspec@4c797b24175df51431ceb374ee57843e1cb2eaf0",
+    "webdataset>=0.2.100",
 ]
 requires-python = ">=3.12,<3.13"
 readme = "README.md"
 license = {file = "LICENSE"}
 
 [project.scripts]
+convert_dataset_to_jsonl = "torch_wae.cli.convert_dataset_to_jsonl:app"
+convert_dataset_to_web = "torch_wae.cli.convert_dataset_to_web:app"
 copy_dataset = "torch_wae.cli.copy_dataset:app"
 export_to_onnx = "torch_wae.cli.export_to_onnx:app"
 generate_pair = "torch_wae.cli.generate_pair:app"

@@ -60,6 +60,22 @@ def crop_randomly(
         return torch.cat((waveform, p), dim=-1)
 
 
+def crop_or_pad_last(
+    sample_rate: int,
+    durations: int,
+    waveform: torch.Tensor,
+) -> torch.Tensor:
+    c, d = waveform.shape
+    size = sample_rate * durations
+    pad = max(0, size - d)
+
+    if d > size:
+        return waveform[:, :size]
+    else:
+        p = torch.zeros((c, pad), dtype=waveform.dtype).to(waveform.device)
+        return torch.cat((waveform, p), dim=-1)
+
+
 def gain_randomly(
     min_: float,
     max_: float,
