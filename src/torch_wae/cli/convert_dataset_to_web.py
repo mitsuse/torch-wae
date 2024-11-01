@@ -34,8 +34,6 @@ def main(
         help="the output path of a directory which stores shards of WebDataset,",
     ),
 ) -> None:
-    import json
-
     from torch.utils.data import DataLoader
     from tqdm import tqdm
     from webdataset.writer import ShardWriter
