@@ -15,9 +15,17 @@ class JsonLinesDataset(data.IterableDataset):
         self.__path = path
 
     def __iter__(self) -> Iterator[Any]:
+        worker_info = data.get_worker_info()
+
         with self.__path.open() as f:
-            for line in f:
-                yield json.loads(line)
+            for i, line in enumerate(f):
+                if worker_info is None:
+                    yield json.loads(line)
+                else:
+                    worker_id = worker_info.id
+                    num_workers = worker_info.num_workers
+                    if i % num_workers == worker_id:
+                        yield json.loads(line)
 
 
 @dataclass(frozen=True)
