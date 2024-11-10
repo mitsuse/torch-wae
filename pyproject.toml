@@ -23,6 +23,7 @@ license = {file = "LICENSE"}
 convert_dataset_to_jsonl = "torch_wae.cli.convert_dataset_to_jsonl:app"
 convert_dataset_to_web = "torch_wae.cli.convert_dataset_to_web:app"
 convert_pair_to_web = "torch_wae.cli.convert_pair_to_web:app"
+convert_to_melspec = "torch_wae.cli.convert_to_melspec:app"
 copy_dataset = "torch_wae.cli.copy_dataset:app"
 export_to_onnx = "torch_wae.cli.export_to_onnx:app"
 generate_pair = "torch_wae.cli.generate_pair:app"
