@@ -7,7 +7,7 @@ from torch.nn import functional as F
 from torchaudio import functional as FA
 
 
-# Wowrd Audio Encoder - A network for audio similar to MobileNet V2 for images.
+# Word Audio Encoder - A network for audio similar to MobileNet V2 for images.
 class WAENet(nn.Module):
     def __init__(self, s: int) -> None:
         super().__init__()
