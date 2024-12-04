@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import logging
+from enum import Enum
+
 import torch
 from convmelspec.stft import ConvertibleSpectrogram as Spectrogram
 from torch import nn
@@ -8,17 +11,73 @@ from torchaudio import functional as FA
 
 
 # Word Audio Encoder - A network for audio similar to MobileNet V2 for images.
+class WAEHeadType(str, Enum):
+    CONV = "conv"
+    LINEAR = "linear"
+    ATTEN_1 = "atten_1"
+    ATTEN_2 = "atten_2"
+    ATTEN_4 = "atten_4"
+
+
+class WAEActivationType(str, Enum):
+    LEAKY_RELU = "leaky_relu"
+    TANH = "tanh"
+
+
 class WAENet(nn.Module):
-    def __init__(self, s: int) -> None:
+    def __init__(
+        self,
+        s: int,
+        head_type: WAEHeadType,
+        head_activation_type: WAEActivationType,
+    ) -> None:
         super().__init__()
 
         self.preprocess = Preprocess()
 
         self.encoder = Encoder(s=s)
 
+        if head_type not in (WAEHeadType.CONV, WAEHeadType.LINEAR):
+            logging.debug(
+                "`head_activation_type` is not supported with specified `head_type`"
+            )
+
+        match head_type:
+            case WAEHeadType.CONV:
+                self.head: nn.Module = WAEConvHead(
+                    activation_type=head_activation_type,
+                    s=s,
+                )
+            case WAEHeadType.LINEAR:
+                self.head = WAELinearHead(
+                    activation_type=head_activation_type,
+                    s=s,
+                )
+            case WAEHeadType.ATTEN_1:
+                self.head = WAEAttentionHead(
+                    n_head=1,
+                    s=s,
+                )
+            case WAEHeadType.ATTEN_2:
+                self.head = WAEAttentionHead(
+                    n_head=2,
+                    s=s,
+                )
+            case WAEHeadType.ATTEN_4:
+                self.head = WAEAttentionHead(
+                    n_head=4,
+                    s=s,
+                )
+            case _:
+                raise ValueError(f"unknown head type: {head_type}")
+
+        self.norm = L2Normalize()
+
     def forward(self, waveform: torch.Tensor) -> torch.Tensor:
-        x = self.preprocess(waveform)
-        z = self.encoder(x)
+        h = self.preprocess(waveform)
+        h = self.encoder(h)
+        h = self.head(h)
+        z = self.norm(h)
         return z
 
 
@@ -60,22 +119,97 @@ class Encoder(nn.Module):
             # --------------------
             InvertedBottleneck(k=3, c_in=32 * s, c_out=64 * s, stride=1),
             InvertedBottleneck(k=3, c_in=64 * s, c_out=64 * s, stride=1),
+        )
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor]:
+        return self.layers(x)
+
+
+class WAEConvHead(nn.Module):
+    def __init__(
+        self,
+        activation_type: WAEActivationType,
+        s: int,
+    ) -> None:
+        super().__init__()
+
+        match activation_type:
+            case WAEActivationType.LEAKY_RELU:
+                activation: nn.Module = nn.LeakyReLU()
+            case WAEActivationType.TANH:
+                activation = nn.Tanh()
+            case _:
+                raise ValueError(f"unknown activation type: {activation_type}")
+
+        self.layers = nn.Sequential(
             # --------------------
             # shape: (64, 4, 4) -> (64, 1, 1)
             # --------------------
             nn.Conv2d(64 * s, 64 * s, 4, stride=1),
             nn.BatchNorm2d(64 * s),
-            nn.LeakyReLU(),
+            activation,
             nn.Conv2d(64 * s, 64 * s, 1, stride=1),
-            # --------------------
-            # normalize
-            # --------------------
             nn.Flatten(),
-            L2Normalize(),
         )
 
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        return self.layers(x)
+    def forward(self, h: torch.Tensor) -> tuple[torch.Tensor]:
+        return self.layers(h)
+
+
+class WAELinearHead(nn.Module):
+    def __init__(
+        self,
+        activation_type: WAEActivationType,
+        s: int,
+    ) -> None:
+        super().__init__()
+
+        match activation_type:
+            case WAEActivationType.LEAKY_RELU:
+                activation: nn.Module = nn.LeakyReLU()
+            case WAEActivationType.TANH:
+                activation = nn.Tanh()
+            case _:
+                raise ValueError(f"unknown activation type: {activation_type}")
+
+        self.layers = nn.Sequential(
+            # --------------------
+            # shape: (64, 4, 4) -> (1024,)
+            # --------------------
+            nn.Flatten(),
+            # --------------------
+            # shape: (1024,) -> (64,)
+            # --------------------
+            nn.Linear(1024 * s, 256 * s),
+            nn.BatchNorm1d(256 * s),
+            activation,
+            nn.Linear(256 * s, 64 * s),
+        )
+
+    def forward(self, h: torch.Tensor) -> tuple[torch.Tensor]:
+        return self.layers(h)
+
+
+class WAEAttentionHead(nn.Module):
+    def __init__(
+        self,
+        n_head: int,
+        s: int,
+    ) -> None:
+        super().__init__()
+
+        self.attention = nn.MultiheadAttention(
+            embed_dim=64 * s,
+            num_heads=n_head,
+            batch_first=True,
+        )
+
+    def forward(self, h: torch.Tensor) -> tuple[torch.Tensor]:
+        batch_size, d_s, height, width = h.shape
+        h = h.permute(0, 2, 3, 1).reshape(batch_size, height * width, d_s)
+        h, _ = self.attention(h, h, h)
+        z = h.mean(dim=1)  # shape: (batch_size, d * s)
+        return z
 
 
 class LightUNet(nn.Module):

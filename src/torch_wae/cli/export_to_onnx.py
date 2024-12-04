@@ -5,7 +5,7 @@ from pathlib import Path
 import torch
 import typer
 
-from torch_wae.network import WAENet, WithResample
+from torch_wae.network import WAEActivationType, WAEHeadType, WAENet, WithResample
 
 app = typer.Typer()
 
@@ -20,12 +20,24 @@ def main(
         48000,
         help="the original sample-rate for input (NOTE: WAENet resamples audio to 16KHz)",
     ),
+    head_type: WAEHeadType = typer.Option(
+        ...,
+        help="",
+    ),
+    head_activation_type: WAEActivationType = typer.Option(
+        ...,
+        help="",
+    ),
     output: Path = typer.Option(
         ...,
         help="the output path of a model converted for ONNX",
     ),
 ) -> None:
-    f = WAENet(s=1)
+    f = WAENet(
+        head_type=head_type,
+        head_activation_type=head_activation_type,
+        s=1,
+    )
     assert sample_rate >= f.preprocess.SAMPLE_RATE
 
     f.load_state_dict(torch.load(pt))
@@ -38,7 +50,7 @@ def main(
     output.parent.mkdir(parents=True, exist_ok=True)
     torch.onnx.export(
         m,
-        waveform,
+        (waveform,),
         str(output),
         export_params=True,
         input_names=["waveform"],
