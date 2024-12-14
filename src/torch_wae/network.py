@@ -324,7 +324,7 @@ class LightUNet(nn.Module):
 class Preprocess(nn.Module):
     SAMPLE_RATE: int = 16000
 
-    def __init__(self) -> None:
+    def __init__(self, eps: float = 1e-6) -> None:
         super().__init__()
 
         self.melSpec = Spectrogram(
@@ -335,12 +335,17 @@ class Preprocess(nn.Module):
             power=2,
         )
         self.melSpec.set_mode("DFT", "on_the_fly")
+        self.eps = eps
+
+        with torch.no_grad():
+            x = torch.zeros((1, self.SAMPLE_RATE))
+            x = self.melSpec(x)
+            self.log_mel_min = torch.log(x + self.eps).min()
 
     def forward(self, waveform: torch.Tensor) -> torch.Tensor:
         x = self.melSpec(waveform)
-        x = torch.clip(x, 1e-6)
-        x = torch.log(x)
-        x = x[:, None, :, :]
+        x = torch.clip(torch.log(x + self.eps) - self.log_mel_min, 0.0)
+        x = x.unsqueeze(1)
         return x
 
 
