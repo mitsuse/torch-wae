@@ -24,9 +24,13 @@ def main(
         ...,
         help="",
     ),
+    activation_type: WAEActivationType = typer.Option(
+        ...,
+        help="the type of activation function",
+    ),
     head_activation_type: WAEActivationType = typer.Option(
         ...,
-        help="",
+        help="the type of activation function for head layers",
     ),
     output: Path = typer.Option(
         ...,
@@ -34,6 +38,7 @@ def main(
     ),
 ) -> None:
     f = WAENet(
+        activation_type=activation_type,
         head_type=head_type,
         head_activation_type=head_activation_type,
         s=1,
