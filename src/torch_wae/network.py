@@ -21,7 +21,22 @@ class WAEHeadType(str, Enum):
 
 class WAEActivationType(str, Enum):
     LEAKY_RELU = "leaky_relu"
+    RELU6 = "relu6"
     TANH = "tanh"
+
+
+def activation(type_: WAEActivationType) -> nn.Module:
+    match type_:
+        case WAEActivationType.RELU6:
+            activation: nn.Module = nn.ReLU6()
+        case WAEActivationType.LEAKY_RELU:
+            activation = nn.LeakyReLU()
+        case WAEActivationType.TANH:
+            activation = nn.Tanh()
+        case _:
+            raise ValueError(f"unknown activation type: {type_}")
+
+    return activation
 
 
 class WAENet(nn.Module):
@@ -29,13 +44,14 @@ class WAENet(nn.Module):
         self,
         s: int,
         head_type: WAEHeadType,
+        activation_type: WAEActivationType,
         head_activation_type: WAEActivationType,
     ) -> None:
         super().__init__()
 
         self.preprocess = Preprocess()
 
-        self.encoder = Encoder(s=s)
+        self.encoder = Encoder(s=s, activation_type=activation_type)
 
         if head_type not in (WAEHeadType.CONV, WAEHeadType.LINEAR):
             logging.debug(
@@ -82,43 +98,133 @@ class WAENet(nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(self, s: int) -> None:
+    def __init__(self, s: int, activation_type: WAEActivationType) -> None:
         super().__init__()
 
         self.layers = nn.Sequential(
             # --------------------
             # shape: (1, 64, 64) -> (8, 32, 32)
             # --------------------
-            InvertedBottleneck(k=3, c_in=1, c_out=8 * s, stride=2),
+            InvertedBottleneck(
+                k=3,
+                c_in=1,
+                c_out=8 * s,
+                stride=2,
+                activation_type=activation_type,
+            ),
             # --------------------
             # shape: (8, 32, 32) -> (12, 32, 32)
             # --------------------
-            InvertedBottleneck(k=3, c_in=8 * s, c_out=12 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=12 * s, c_out=12 * s, stride=1),
+            InvertedBottleneck(
+                k=3,
+                c_in=8 * s,
+                c_out=12 * s,
+                stride=1,
+                activation_type=activation_type,
+            ),
+            InvertedBottleneck(
+                k=3,
+                c_in=12 * s,
+                c_out=12 * s,
+                stride=1,
+                activation_type=activation_type,
+            ),
             # --------------------
             # shape: (12, 32, 32) -> (12, 16, 16)
             # --------------------
-            InvertedBottleneck(k=3, c_in=12 * s, c_out=12 * s, stride=2),
-            InvertedBottleneck(k=3, c_in=12 * s, c_out=12 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=12 * s, c_out=12 * s, stride=1),
+            InvertedBottleneck(
+                k=3,
+                c_in=12 * s,
+                c_out=12 * s,
+                stride=2,
+                activation_type=activation_type,
+            ),
+            InvertedBottleneck(
+                k=3,
+                c_in=12 * s,
+                c_out=12 * s,
+                stride=1,
+                activation_type=activation_type,
+            ),
+            InvertedBottleneck(
+                k=3,
+                c_in=12 * s,
+                c_out=12 * s,
+                stride=1,
+                activation_type=activation_type,
+            ),
             # --------------------
             # shape: (12, 16, 16) -> (16, 8, 8)
             # --------------------
-            InvertedBottleneck(k=3, c_in=12 * s, c_out=16 * s, stride=2),
-            InvertedBottleneck(k=3, c_in=16 * s, c_out=16 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=16 * s, c_out=16 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=16 * s, c_out=16 * s, stride=1),
+            InvertedBottleneck(
+                k=3,
+                c_in=12 * s,
+                c_out=16 * s,
+                stride=2,
+                activation_type=activation_type,
+            ),
+            InvertedBottleneck(
+                k=3,
+                c_in=16 * s,
+                c_out=16 * s,
+                stride=1,
+                activation_type=activation_type,
+            ),
+            InvertedBottleneck(
+                k=3,
+                c_in=16 * s,
+                c_out=16 * s,
+                stride=1,
+                activation_type=activation_type,
+            ),
+            InvertedBottleneck(
+                k=3,
+                c_in=16 * s,
+                c_out=16 * s,
+                stride=1,
+                activation_type=activation_type,
+            ),
             # --------------------
             # shape: (16, 8, 8) -> (32, 4, 4)
             # --------------------
-            InvertedBottleneck(k=3, c_in=16 * s, c_out=32 * s, stride=2),
-            InvertedBottleneck(k=3, c_in=32 * s, c_out=32 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=32 * s, c_out=32 * s, stride=1),
+            InvertedBottleneck(
+                k=3,
+                c_in=16 * s,
+                c_out=32 * s,
+                stride=2,
+                activation_type=activation_type,
+            ),
+            InvertedBottleneck(
+                k=3,
+                c_in=32 * s,
+                c_out=32 * s,
+                stride=1,
+                activation_type=activation_type,
+            ),
+            InvertedBottleneck(
+                k=3,
+                c_in=32 * s,
+                c_out=32 * s,
+                stride=1,
+                activation_type=activation_type,
+            ),
             # --------------------
             # shape: (32, 4, 4) -> (64, 4, 4)
             # --------------------
-            InvertedBottleneck(k=3, c_in=32 * s, c_out=64 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=64 * s, c_out=64 * s, stride=1),
+            InvertedBottleneck(
+                k=3,
+                c_in=32 * s,
+                c_out=64 * s,
+                stride=1,
+                activation_type=activation_type,
+            ),
+            InvertedBottleneck(
+                k=3,
+                c_in=64 * s,
+                c_out=64 * s,
+                stride=1,
+                activation_type=activation_type,
+            ),
         )
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor]:
@@ -133,21 +239,13 @@ class WAEConvHead(nn.Module):
     ) -> None:
         super().__init__()
 
-        match activation_type:
-            case WAEActivationType.LEAKY_RELU:
-                activation: nn.Module = nn.LeakyReLU()
-            case WAEActivationType.TANH:
-                activation = nn.Tanh()
-            case _:
-                raise ValueError(f"unknown activation type: {activation_type}")
-
         self.layers = nn.Sequential(
             # --------------------
             # shape: (64, 4, 4) -> (64, 1, 1)
             # --------------------
             nn.Conv2d(64 * s, 64 * s, 4, stride=1),
             nn.BatchNorm2d(64 * s),
-            activation,
+            activation(activation_type),
             nn.Conv2d(64 * s, 64 * s, 1, stride=1),
             nn.Flatten(),
         )
@@ -164,14 +262,6 @@ class WAELinearHead(nn.Module):
     ) -> None:
         super().__init__()
 
-        match activation_type:
-            case WAEActivationType.LEAKY_RELU:
-                activation: nn.Module = nn.LeakyReLU()
-            case WAEActivationType.TANH:
-                activation = nn.Tanh()
-            case _:
-                raise ValueError(f"unknown activation type: {activation_type}")
-
         self.layers = nn.Sequential(
             # --------------------
             # shape: (64, 4, 4) -> (1024,)
@@ -180,10 +270,9 @@ class WAELinearHead(nn.Module):
             # --------------------
             # shape: (1024,) -> (64,)
             # --------------------
-            nn.Linear(1024 * s, 256 * s),
-            nn.BatchNorm1d(256 * s),
-            activation,
-            nn.Linear(256 * s, 64 * s),
+            nn.BatchNorm1d(1024 * s),
+            activation(activation_type),
+            nn.Linear(1024 * s, 64 * s),
         )
 
     def forward(self, h: torch.Tensor) -> tuple[torch.Tensor]:
@@ -210,115 +299,6 @@ class WAEAttentionHead(nn.Module):
         h, _ = self.attention(h, h, h)
         z = h.mean(dim=1)  # shape: (batch_size, d * s)
         return z
-
-
-class LightUNet(nn.Module):
-    def __init__(self, s: int) -> None:
-        super().__init__()
-
-        mode = "nearest"
-
-        # --------------------
-        # shape: (1, 64, 64) -> (8, 32, 32)
-        # --------------------
-        self.encode_0 = nn.Sequential(
-            InvertedBottleneck(k=3, c_in=1, c_out=8 * s, stride=2),
-            InvertedBottleneck(k=3, c_in=8 * s, c_out=8 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=8 * s, c_out=8 * s, stride=1),
-        )
-
-        # --------------------
-        # shape: (8, 32, 32) -> (12, 16, 16)
-        # --------------------
-        self.encode_1 = nn.Sequential(
-            InvertedBottleneck(k=3, c_in=8 * s, c_out=12 * s, stride=2),
-            InvertedBottleneck(k=3, c_in=12 * s, c_out=12 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=12 * s, c_out=12 * s, stride=1),
-        )
-
-        # --------------------
-        # shape: (12, 16, 16) -> (16, 8, 8)
-        # --------------------
-        self.encode_2 = nn.Sequential(
-            InvertedBottleneck(k=3, c_in=12 * s, c_out=16 * s, stride=2),
-            InvertedBottleneck(k=3, c_in=16 * s, c_out=16 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=16 * s, c_out=16 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=16 * s, c_out=16 * s, stride=1),
-        )
-
-        # --------------------
-        # shape: (16, 8, 8) -> (32, 4, 4)
-        # --------------------
-        self.encode_3 = nn.Sequential(
-            InvertedBottleneck(k=3, c_in=16 * s, c_out=32 * s, stride=2),
-            InvertedBottleneck(k=3, c_in=32 * s, c_out=32 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=32 * s, c_out=32 * s, stride=1),
-        )
-
-        # --------------------
-        # shape: (32, 4, 4) -> (16, 8, 8)
-        # --------------------
-        self.decode_0 = nn.Sequential(
-            InvertedBottleneck(k=3, c_in=32 * s, c_out=32 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=32 * s, c_out=32 * s, stride=1),
-            nn.Upsample(scale_factor=2, mode=mode),
-            InvertedBottleneck(k=3, c_in=32 * s, c_out=16 * s, stride=1),
-        )
-
-        # --------------------
-        # shape: (16, 8, 8) -> (12, 16, 16)
-        # --------------------
-        self.decode_1 = nn.Sequential(
-            InvertedBottleneck(k=3, c_in=16 * s, c_out=16 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=16 * s, c_out=16 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=16 * s, c_out=16 * s, stride=1),
-            nn.Upsample(scale_factor=2, mode=mode),
-            InvertedBottleneck(k=3, c_in=16 * s, c_out=12 * s, stride=1),
-        )
-
-        # --------------------
-        # shape: (12, 16, 16) -> (8, 32, 32)
-        # --------------------
-        self.decode_2 = nn.Sequential(
-            InvertedBottleneck(k=3, c_in=12 * s, c_out=12 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=12 * s, c_out=12 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=12 * s, c_out=12 * s, stride=1),
-            InvertedBottleneck(k=3, c_in=12 * s, c_out=12 * s, stride=1),
-            nn.Upsample(scale_factor=2, mode=mode),
-            InvertedBottleneck(k=3, c_in=12 * s, c_out=8 * s, stride=1),
-        )
-
-        # --------------------
-        # shape: (8, 32, 32) -> (1, 64, 64)
-        # --------------------
-        self.decode_3 = nn.Sequential(
-            InvertedBottleneck(k=3, c_in=8 * s, c_out=1 * s, stride=1),
-            nn.Upsample(scale_factor=2, mode=mode),
-            InvertedBottleneck(k=3, c_in=1 * s, c_out=1 * s, stride=1),
-        )
-
-        # --------------------
-        # Refine
-        # --------------------
-        self.refine = nn.Sequential(
-            nn.Conv2d(1 * s, 1 * s, 3, stride=1, padding=1),
-            nn.BatchNorm2d(1 * s),
-            nn.LeakyReLU(),
-            nn.Conv2d(1 * s, 1, 3, stride=1, padding=1),
-        )
-
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        h_0 = self.encode_0(x)
-        h_1 = self.encode_1(h_0)
-        h_2 = self.encode_2(h_1)
-        h_3 = self.encode_3(h_2)
-
-        h_4 = self.decode_0(h_3)
-        h_5 = self.decode_1(h_4 + h_2)
-        h_6 = self.decode_2(h_5 + h_1)
-        h_7 = self.decode_3(h_6 + h_0)
-
-        return self.refine(h_7 + x)
 
 
 class Preprocess(nn.Module):
@@ -350,7 +330,14 @@ class Preprocess(nn.Module):
 
 
 class InvertedBottleneck(nn.Module):
-    def __init__(self, k: int, c_in: int, c_out: int, stride: int) -> None:
+    def __init__(
+        self,
+        k: int,
+        c_in: int,
+        c_out: int,
+        stride: int,
+        activation_type: WAEActivationType,
+    ) -> None:
         super().__init__()
 
         c_hidden = c_in * 3
@@ -359,7 +346,7 @@ class InvertedBottleneck(nn.Module):
         self.main = nn.Sequential(
             nn.Conv2d(c_in, c_hidden, 1, stride=1),
             nn.BatchNorm2d(c_hidden),
-            nn.LeakyReLU(),
+            activation(activation_type),
             nn.Conv2d(
                 c_hidden,
                 c_hidden,
@@ -369,7 +356,7 @@ class InvertedBottleneck(nn.Module):
                 padding=padding,
             ),
             nn.BatchNorm2d(c_hidden),
-            nn.LeakyReLU(),
+            activation(activation_type),
             nn.Conv2d(c_hidden, c_out, 1, stride=1),
             nn.BatchNorm2d(c_out),
         )
@@ -377,7 +364,7 @@ class InvertedBottleneck(nn.Module):
         self.branch = nn.Sequential(
             nn.Conv2d(c_in, c_out, 1, stride=stride),
             nn.BatchNorm2d(c_out),
-            nn.LeakyReLU(),
+            activation(activation_type),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
