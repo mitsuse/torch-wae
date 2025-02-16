@@ -4,7 +4,6 @@ import torch
 
 from torch_wae.network import (
     Encoder,
-    LightUNet,
     Preprocess,
     WAEActivationType,
     WAEAttentionHead,
@@ -23,19 +22,10 @@ def test__preprocess_shape() -> None:
     assert x.shape == (1, 1, d, d)
 
 
-def test__light_unet_shape() -> None:
-    for s in (1, 2):
-        d = 64
-        f = LightUNet(s=s).train(False)
-        x = torch.randn((1, 1, d, d))
-        x_ = f(x)
-        assert x_.shape == x.shape
-
-
 def test__wae_encoder_shape() -> None:
     for s in (1, 2):
         d = 64
-        f = Encoder(s=s).train(False)
+        f = Encoder(s=s, activation_type=WAEActivationType.RELU6).train(False)
         x = torch.randn((1, 1, d, d))
         z = f(x)
         assert z.shape == (1, d * s, 4, 4)
@@ -91,7 +81,8 @@ def test__wae_forward_shape() -> None:
             d = 64
             f = WAENet(
                 head_type=head_type,
-                head_activation_type=WAEActivationType.LEAKY_RELU,
+                activation_type=WAEActivationType.RELU6,
+                head_activation_type=WAEActivationType.RELU6,
                 s=s,
             ).train(False)
             waveform = torch.randn((1, f.preprocess.SAMPLE_RATE))
