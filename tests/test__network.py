@@ -37,6 +37,7 @@ def test__wae_conv_head_shape() -> None:
         f = WAEConvHead(
             activation_type=WAEActivationType.LEAKY_RELU,
             s=s,
+            h=2,
         ).train(False)
         x = torch.randn((1, d * s, 4, 4))
         z = f(x)
@@ -69,7 +70,7 @@ def test__wae_attention_head_shape() -> None:
 
 def test__wae_forward_shape() -> None:
     seq_head = (
-        WAEHeadType.CONV,
+        WAEHeadType.CONV_H2,
         WAEHeadType.LINEAR,
         WAEHeadType.ATTEN_1,
         WAEHeadType.ATTEN_2,
