@@ -12,7 +12,9 @@ from torchaudio import functional as FA
 
 # Word Audio Encoder - A network for audio similar to MobileNet V2 for images.
 class WAEHeadType(str, Enum):
-    CONV = "conv"
+    CONV_H1 = "conv_H1"
+    CONV_H2 = "conv_H2"
+    CONV_H4 = "conv_H4"
     LINEAR = "linear"
     ATTEN_1 = "atten_1"
     ATTEN_2 = "atten_2"
@@ -53,16 +55,24 @@ class WAENet(nn.Module):
 
         self.encoder = Encoder(s=s, activation_type=activation_type)
 
-        if head_type not in (WAEHeadType.CONV, WAEHeadType.LINEAR):
-            logging.debug(
-                "`head_activation_type` is not supported with specified `head_type`"
-            )
-
         match head_type:
-            case WAEHeadType.CONV:
+            case WAEHeadType.CONV_H1:
                 self.head: nn.Module = WAEConvHead(
                     activation_type=head_activation_type,
                     s=s,
+                    h=1,
+                )
+            case WAEHeadType.CONV_H2:
+                self.head = WAEConvHead(
+                    activation_type=head_activation_type,
+                    s=s,
+                    h=2,
+                )
+            case WAEHeadType.CONV_H4:
+                self.head = WAEConvHead(
+                    activation_type=head_activation_type,
+                    s=s,
+                    h=4,
                 )
             case WAEHeadType.LINEAR:
                 self.head = WAELinearHead(
@@ -236,6 +246,7 @@ class WAEConvHead(nn.Module):
         self,
         activation_type: WAEActivationType,
         s: int,
+        h: int,
     ) -> None:
         super().__init__()
 
@@ -243,10 +254,10 @@ class WAEConvHead(nn.Module):
             # --------------------
             # shape: (64, 4, 4) -> (64, 1, 1)
             # --------------------
-            nn.Conv2d(64 * s, 64 * s, 4, stride=1),
-            nn.BatchNorm2d(64 * s),
+            nn.Conv2d(64 * s, 64 * s * h, 4, stride=1),
+            nn.BatchNorm2d(64 * s * h),
             activation(activation_type),
-            nn.Conv2d(64 * s, 64 * s, 1, stride=1),
+            nn.Conv2d(64 * s * h, 64 * s, 1, stride=1),
             nn.Flatten(),
         )
 

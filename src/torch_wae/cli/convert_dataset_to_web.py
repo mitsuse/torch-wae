@@ -61,7 +61,7 @@ def main(
     )
 
     output.mkdir(parents=True, exist_ok=True)
-    pattern = str(output / "%04d.tar")
+    pattern = str(output / "%06d.tar")
     max_size = size_shard * 1024**2
 
     with tqdm(total=n) as progress:
