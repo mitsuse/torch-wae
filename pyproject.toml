@@ -26,6 +26,7 @@ convert_pair_to_web = "torch_wae.cli.convert_pair_to_web:app"
 copy_dataset = "torch_wae.cli.copy_dataset:app"
 export_to_onnx = "torch_wae.cli.export_to_onnx:app"
 generate_pair = "torch_wae.cli.generate_pair:app"
+reshard_web = "torch_wae.cli.reshard_web:app"
 
 [tool.pdm]
 include = [
