@@ -319,7 +319,7 @@ class Preprocess(nn.Module):
         super().__init__()
 
         self.melSpec = Spectrogram(
-            sr=self.SAMPLE_RATE,
+            sr=Preprocess.SAMPLE_RATE,
             n_fft=512,
             hop_size=260,
             n_mel=64,
