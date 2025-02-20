@@ -395,13 +395,14 @@ class L2Normalize(nn.Module):
 
 
 class WithResample(torch.nn.Module):
-    def __init__(self, f: WAENet, sample_rate: int) -> None:
+    def __init__(self, f: WAENet, resample_rate: int) -> None:
         super().__init__()
 
         self.f = f
-        self.sample_rate = sample_rate
+        self.resample_rate = resample_rate
 
     def forward(self, waveform: torch.Tensor) -> torch.Tensor:
-        h = FA.resample(waveform, self.sample_rate, self.f.SAMPLE_RATE)
+        sample_rate = waveform.shape[-1]
+        h = FA.resample(waveform, sample_rate, self.resample_rate)
         z = self.f(h)
         return z
