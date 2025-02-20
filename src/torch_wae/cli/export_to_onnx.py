@@ -5,7 +5,13 @@ from pathlib import Path
 import torch
 import typer
 
-from torch_wae.network import WAEActivationType, WAEHeadType, WAENet, WithResample
+from torch_wae.network import (
+    Preprocess,
+    WAEActivationType,
+    WAEHeadType,
+    WAENet,
+    WithResample,
+)
 
 app = typer.Typer()
 
@@ -15,10 +21,6 @@ def main(
     pt: Path = typer.Option(
         ...,
         help="the path of a model-paramter file formatted for PyTorch",
-    ),
-    sample_rate: int = typer.Option(
-        48000,
-        help="the original sample-rate for input (NOTE: WAENet resamples audio to 16KHz)",
     ),
     head_type: WAEHeadType = typer.Option(
         ...,
@@ -43,14 +45,13 @@ def main(
         head_activation_type=head_activation_type,
         s=1,
     )
-    assert sample_rate >= f.preprocess.SAMPLE_RATE
 
     f.load_state_dict(torch.load(pt))
     f.train(False)
 
-    m = WithResample(f, sample_rate=sample_rate)
+    m = WithResample(f, Preprocess.SAMPLE_RATE)
 
-    waveform = torch.randn((1, sample_rate))
+    waveform = torch.randn((1, 48000))
 
     output.parent.mkdir(parents=True, exist_ok=True)
     torch.onnx.export(
@@ -61,7 +62,7 @@ def main(
         input_names=["waveform"],
         output_names=["z"],
         dynamic_axes={
-            "waveform": {0: "batch_size"},
+            "waveform": {0: "batch_size", 1: "sample_rate"},
             "z": {0: "batch_size"},
         },
     )
