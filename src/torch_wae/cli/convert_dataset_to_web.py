@@ -25,9 +25,9 @@ def main(
         ...,
         help="the path of a dataset to be encoded.",
     ),
-    size_shard: int = typer.Option(
-        100,
-        help="the max size of a shard (unit: MB)",
+    max_examples: int = typer.Option(
+        ...,
+        help="the max number of examples for a shard.",
     ),
     output: Path = typer.Option(
         ...,
@@ -62,11 +62,10 @@ def main(
 
     output.mkdir(parents=True, exist_ok=True)
     pattern = str(output / "%06d.tar")
-    max_size = size_shard * 1024**2
 
     with tqdm(total=n) as progress:
-        with ShardWriter(pattern, maxsize=max_size, verbose=0) as w:
-            for i, (path, key, class_id, melspec, ignore) in enumerate(loader):
+        with ShardWriter(pattern, maxcount=max_examples, verbose=0) as w:
+            for i, (path, key, class_id, waveform, ignore) in enumerate(loader):
                 if n <= i:
                     break
 
@@ -77,12 +76,12 @@ def main(
                 path = path[0]
                 key = key[0]
                 class_id = int(class_id.detach().numpy()[0])
-                melspec = melspec.detach().numpy()[0]
+                waveform = waveform.detach().numpy()[0]
 
                 w.write(
                     {
                         "__key__": key,
-                        "npy": melspec,
+                        "npy": waveform,
                         "json": {
                             "class_id": class_id,
                             "path": path,
@@ -100,14 +99,11 @@ class Transform:
         resample_rate: int,
         durations: int,
     ) -> None:
-        from torch_wae.network import Preprocess
-
         super().__init__()
 
         self.__root = root
         self.__resample_rate = resample_rate
         self.__durations = durations
-        self.__preprocess = Preprocess()
 
     def __call__(self, example: Any) -> tuple[str, str, int, torch.Tensor, bool]:
         from torch_wae.audio import crop_or_pad_last
@@ -115,7 +111,6 @@ class Transform:
         root = self.__root
         resample_rate = self.__resample_rate
         durations = self.__durations
-        preprocess = self.__preprocess
 
         path = str(example["path"])
         key = path.rsplit(".", maxsplit=1)[0]
@@ -132,11 +127,10 @@ class Transform:
         frames = waveform.shape[-1]
 
         waveform = crop_or_pad_last(resample_rate, durations, waveform)
-        melspec = preprocess(waveform)[0]
 
         ignore = frames > durations * resample_rate
 
-        return path, key, class_id, melspec, ignore
+        return path, key, class_id, waveform, ignore
 
 
 if __name__ == "__main__":
