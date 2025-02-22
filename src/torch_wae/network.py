@@ -332,7 +332,6 @@ class Preprocess(nn.Module):
     def forward(self, waveform: torch.Tensor) -> torch.Tensor:
         x = self.melspec(waveform)
         x = torch.log(x + self.eps) + self.shift
-        x = x.unsqueeze(1)
         return x
 
 
