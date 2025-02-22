@@ -44,13 +44,14 @@ class WAENet(nn.Module):
     def __init__(
         self,
         s: int,
+        shift_melspec: float,
         head_type: WAEHeadType,
         activation_type: WAEActivationType,
         head_activation_type: WAEActivationType,
     ) -> None:
         super().__init__()
 
-        self.preprocess = Preprocess()
+        self.preprocess = Preprocess(shift=shift_melspec)
 
         self.encoder = Encoder(s=s, activation_type=activation_type)
 
@@ -314,27 +315,23 @@ class WAEAttentionHead(nn.Module):
 class Preprocess(nn.Module):
     SAMPLE_RATE: int = 16000
 
-    def __init__(self, eps: float = 1e-6) -> None:
+    def __init__(self, shift: float, eps: float = 1e-6) -> None:
         super().__init__()
 
-        self.melSpec = Spectrogram(
+        self.melspec = Spectrogram(
             sr=Preprocess.SAMPLE_RATE,
             n_fft=512,
             hop_size=260,
             n_mel=64,
             power=2,
         )
-        self.melSpec.set_mode("DFT", "on_the_fly")
+        self.melspec.set_mode("DFT", "on_the_fly")
         self.eps = eps
-
-        with torch.no_grad():
-            x = torch.zeros((1, self.SAMPLE_RATE))
-            x = self.melSpec(x)
-            self.log_mel_min = torch.log(x + self.eps).min()
+        self.shift = shift
 
     def forward(self, waveform: torch.Tensor) -> torch.Tensor:
-        x = self.melSpec(waveform)
-        x = torch.clip(torch.log(x + self.eps) - self.log_mel_min, 0.0)
+        x = self.melspec(waveform)
+        x = torch.log(x + self.eps) + self.shift
         x = x.unsqueeze(1)
         return x
 

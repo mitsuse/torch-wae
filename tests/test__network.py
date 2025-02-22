@@ -16,7 +16,7 @@ from torch_wae.network import (
 
 def test__preprocess_shape() -> None:
     d = 64
-    f = Preprocess().train(False)
+    f = Preprocess(shift=0.1).train(False)
     waveform = torch.randn((1, Preprocess.SAMPLE_RATE))
     x = f(waveform)
     assert x.shape == (1, 1, d, d)
@@ -85,6 +85,7 @@ def test__wae_forward_shape() -> None:
                 activation_type=WAEActivationType.RELU6,
                 head_activation_type=WAEActivationType.RELU6,
                 s=s,
+                shift_melspec=0.1,
             ).train(False)
             waveform = torch.randn((1, f.preprocess.SAMPLE_RATE))
             z = f(waveform)

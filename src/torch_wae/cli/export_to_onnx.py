@@ -34,6 +34,10 @@ def main(
         ...,
         help="the type of activation function for head layers",
     ),
+    shift_melspec: float = typer.Option(
+        ...,
+        help="a hyper-paramerter to shift log mel-spectrogram",
+    ),
     output: Path = typer.Option(
         ...,
         help="the output path of a model converted for ONNX",
@@ -44,6 +48,7 @@ def main(
         head_type=head_type,
         head_activation_type=head_activation_type,
         s=1,
+        shift_melspec=shift_melspec,
     )
 
     f.load_state_dict(torch.load(pt))
