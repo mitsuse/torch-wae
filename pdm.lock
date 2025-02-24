@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.2"
-content_hash = "sha256:bc21bb86cbdeac434b28a209eed4f2dbbeaac08db99695268937df79c43d643c"
+content_hash = "sha256:52c5a7d864f3eaea65fb592e09fc11b08ab06d03ffb97f67cafce3dee2994411"
 
 [[package]]
 name = "annotated-types"
@@ -1148,6 +1148,17 @@ dependencies = [
 files = [
     {file = "typer_slim-0.12.5-py3-none-any.whl", hash = "sha256:9a994f721b828783dbf144e17461b1c720bb4598e0d5eff7c1b3f08ee58cb062"},
     {file = "typer_slim-0.12.5.tar.gz", hash = "sha256:c8e3fcf93cc7dd584036df8755d2e2363f85f8a4dd028c7911eed3f00cf0ebb1"},
+]
+
+[[package]]
+name = "types-pyyaml"
+version = "6.0.12.20241230"
+requires_python = ">=3.8"
+summary = "Typing stubs for PyYAML"
+groups = ["dev"]
+files = [
+    {file = "types_PyYAML-6.0.12.20241230-py3-none-any.whl", hash = "sha256:fa4d32565219b68e6dee5f67534c722e53c00d1cfc09c435ef04d7353e1e96e6"},
+    {file = "types_pyyaml-6.0.12.20241230.tar.gz", hash = "sha256:7f07622dbd34bb9c8b264fe860a17e0efcad00d50b5f27e93984909d9363498c"},
 ]
 
 [[package]]

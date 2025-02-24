@@ -39,6 +39,7 @@ dev = [
     "ruff>=0.5.1",
     "isort>=5.13.2",
     "pytest>=8.2.2",
+    "types-pyyaml>=6.0.12.20241230",
 ]
 
 [tool.isort]

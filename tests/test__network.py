@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Callable
+
 import torch
 
 from torch_wae.network import (
@@ -11,6 +13,9 @@ from torch_wae.network import (
     WAEHeadType,
     WAELinearHead,
     WAENet,
+    atten_head,
+    conv_head,
+    linear_head,
 )
 
 
@@ -69,11 +74,11 @@ def test__wae_attention_head_shape() -> None:
 
 
 def test__wae_forward_shape() -> None:
-    seq_head = (
-        WAEHeadType.CONV_H2,
-        WAEHeadType.LINEAR,
-        WAEHeadType.ATTEN_1,
-        WAEHeadType.ATTEN_2,
+    seq_head: tuple[Callable[[int], WAEHeadType], ...] = (
+        lambda s: conv_head(activation=WAEActivationType.LEAKY_RELU, s=s, h=1),
+        lambda s: linear_head(activation=WAEActivationType.LEAKY_RELU, s=s),
+        lambda s: atten_head(s=s, n_head=1),
+        lambda s: atten_head(s=s, n_head=2),
     )
     seq_s = (1, 2)
 
@@ -81,9 +86,8 @@ def test__wae_forward_shape() -> None:
         for s in seq_s:
             d = 64
             f = WAENet(
-                head_type=head_type,
+                head_type=head_type(s),
                 activation_type=WAEActivationType.RELU6,
-                head_activation_type=WAEActivationType.RELU6,
                 s=s,
                 shift_melspec=0.1,
             ).train(False)
