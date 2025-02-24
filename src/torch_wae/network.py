@@ -1,23 +1,14 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Literal, Union
 
 import torch
 from convmelspec.stft import ConvertibleSpectrogram as Spectrogram
+from pydantic.dataclasses import dataclass
 from torch import nn
 from torch.nn import functional as F
 from torchaudio import functional as FA
-
-
-# Word Audio Encoder - A network for audio similar to MobileNet V2 for images.
-class WAEHeadType(str, Enum):
-    CONV_H1 = "conv_H1"
-    CONV_H2 = "conv_H2"
-    CONV_H4 = "conv_H4"
-    LINEAR = "linear"
-    ATTEN_1 = "atten_1"
-    ATTEN_2 = "atten_2"
-    ATTEN_4 = "atten_4"
 
 
 class WAEActivationType(str, Enum):
@@ -40,6 +31,44 @@ def activation(type_: WAEActivationType) -> nn.Module:
     return activation
 
 
+@dataclass(frozen=True)
+class WAEHeadTypeConv:
+    type: Literal["conv"]
+    activation: WAEActivationType
+    s: int
+    h: int
+
+
+@dataclass(frozen=True)
+class WAEHeadTypeLinear:
+    type: Literal["linear"]
+    activation: WAEActivationType
+    s: int
+
+
+@dataclass(frozen=True)
+class WAEHeadTypeAtten:
+    type: Literal["atten"]
+    s: int
+    n_head: int
+
+
+WAEHeadType = Union[WAEHeadTypeConv, WAEHeadTypeLinear, WAEHeadTypeAtten]
+
+
+def conv_head(activation: WAEActivationType, s: int, h: int) -> WAEHeadType:
+    return WAEHeadTypeConv(type="conv", activation=activation, s=s, h=h)
+
+
+def linear_head(activation: WAEActivationType, s: int) -> WAEHeadType:
+    return WAEHeadTypeLinear(type="linear", activation=activation, s=s)
+
+
+def atten_head(s: int, n_head: int) -> WAEHeadType:
+    return WAEHeadTypeAtten(type="atten", s=s, n_head=n_head)
+
+
+# Word Audio Encoder - A network for audio similar to MobileNet V2 for images.
 class WAENet(nn.Module):
     def __init__(
         self,
@@ -47,7 +76,6 @@ class WAENet(nn.Module):
         shift_melspec: float,
         head_type: WAEHeadType,
         activation_type: WAEActivationType,
-        head_activation_type: WAEActivationType,
     ) -> None:
         super().__init__()
 
@@ -56,43 +84,21 @@ class WAENet(nn.Module):
         self.encoder = Encoder(s=s, activation_type=activation_type)
 
         match head_type:
-            case WAEHeadType.CONV_H1:
+            case WAEHeadTypeConv():
                 self.head: nn.Module = WAEConvHead(
-                    activation_type=head_activation_type,
-                    s=s,
-                    h=1,
+                    activation_type=head_type.activation,
+                    s=head_type.s,
+                    h=head_type.h,
                 )
-            case WAEHeadType.CONV_H2:
-                self.head = WAEConvHead(
-                    activation_type=head_activation_type,
-                    s=s,
-                    h=2,
-                )
-            case WAEHeadType.CONV_H4:
-                self.head = WAEConvHead(
-                    activation_type=head_activation_type,
-                    s=s,
-                    h=4,
-                )
-            case WAEHeadType.LINEAR:
+            case WAEHeadTypeLinear():
                 self.head = WAELinearHead(
-                    activation_type=head_activation_type,
-                    s=s,
+                    activation_type=head_type.activation,
+                    s=head_type.s,
                 )
-            case WAEHeadType.ATTEN_1:
+            case WAEHeadTypeAtten():
                 self.head = WAEAttentionHead(
-                    n_head=1,
-                    s=s,
-                )
-            case WAEHeadType.ATTEN_2:
-                self.head = WAEAttentionHead(
-                    n_head=2,
-                    s=s,
-                )
-            case WAEHeadType.ATTEN_4:
-                self.head = WAEAttentionHead(
-                    n_head=4,
-                    s=s,
+                    n_head=head_type.n_head,
+                    s=head_type.s,
                 )
             case _:
                 raise ValueError(f"unknown head type: {head_type}")
