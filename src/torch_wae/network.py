@@ -44,7 +44,7 @@ class WAEHeadTypeGap:
     type: Literal["gap"]
     activation: WAEActivationType
     s: int
-    d: int
+    r: float
 
 
 @dataclass(frozen=True)
@@ -73,8 +73,8 @@ def conv_head(activation: WAEActivationType, s: int, h: int) -> WAEHeadType:
     return WAEHeadTypeConv(type="conv", activation=activation, s=s, h=h)
 
 
-def gap_head(activation: WAEActivationType, s: int, d: int) -> WAEHeadType:
-    return WAEHeadTypeGap(type="gap", activation=activation, s=s, d=d)
+def gap_head(activation: WAEActivationType, s: int, r: float) -> WAEHeadType:
+    return WAEHeadTypeGap(type="gap", activation=activation, s=s, r=r)
 
 
 def linear_head(activation: WAEActivationType, s: int) -> WAEHeadType:
@@ -111,7 +111,7 @@ class WAENet(nn.Module):
                 self.head = WAEGapHead(
                     activation_type=head_type.activation,
                     s=head_type.s,
-                    d=head_type.d,
+                    r=head_type.r,
                 )
             case WAEHeadTypeLinear():
                 self.head = WAELinearHead(
@@ -299,19 +299,19 @@ class WAEGapHead(nn.Module):
         self,
         activation_type: WAEActivationType,
         s: int,
-        d: int,
+        r: float,
     ) -> None:
         super().__init__()
 
         self.layers = nn.Sequential(
             # --------------------
-            # shape: (64, 4, 4) -> (64, 1, 1)
+            # shape: (64 * s, 4, 4) -> (64 * s * r, 1, 1)
             # --------------------
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.BatchNorm2d(64 * s),
             activation(activation_type),
-            nn.Conv2d(64 * s, 64 * d, 1, stride=1),
             nn.Flatten(),
+            nn.Linear(64 * s, int(64 * s * r)),
         )
 
     def forward(self, h: torch.Tensor) -> tuple[torch.Tensor]:
