@@ -10,11 +10,13 @@ from torch_wae.network import (
     WAEActivationType,
     WAEAttentionHead,
     WAEConvHead,
+    WAEGapHead,
     WAEHeadType,
     WAELinearHead,
     WAENet,
     atten_head,
     conv_head,
+    gap_head,
     linear_head,
 )
 
@@ -49,6 +51,19 @@ def test__wae_conv_head_shape() -> None:
         assert z.shape == (1, d * s)
 
 
+def test__wae_gap_head_shape() -> None:
+    for s in (1, 2):
+        s_ = 64 * s
+        f = WAEGapHead(
+            activation_type=WAEActivationType.LEAKY_RELU,
+            s=s,
+            d=s * 2,
+        ).train(False)
+        x = torch.randn((1, s_, 4, 4))
+        z = f(x)
+        assert z.shape == (1, s_ * 2)
+
+
 def test__wae_linear_head_shape() -> None:
     for s in (1, 2):
         d = 64
@@ -76,6 +91,7 @@ def test__wae_attention_head_shape() -> None:
 def test__wae_forward_shape() -> None:
     seq_head: tuple[Callable[[int], WAEHeadType], ...] = (
         lambda s: conv_head(activation=WAEActivationType.LEAKY_RELU, s=s, h=1),
+        lambda s: gap_head(activation=WAEActivationType.LEAKY_RELU, s=s, d=s),
         lambda s: linear_head(activation=WAEActivationType.LEAKY_RELU, s=s),
         lambda s: atten_head(s=s, n_head=1),
         lambda s: atten_head(s=s, n_head=2),

@@ -40,6 +40,14 @@ class WAEHeadTypeConv:
 
 
 @dataclass(frozen=True)
+class WAEHeadTypeGap:
+    type: Literal["gap"]
+    activation: WAEActivationType
+    s: int
+    d: int
+
+
+@dataclass(frozen=True)
 class WAEHeadTypeLinear:
     type: Literal["linear"]
     activation: WAEActivationType
@@ -53,11 +61,20 @@ class WAEHeadTypeAtten:
     n_head: int
 
 
-WAEHeadType = Union[WAEHeadTypeConv, WAEHeadTypeLinear, WAEHeadTypeAtten]
+WAEHeadType = Union[
+    WAEHeadTypeConv,
+    WAEHeadTypeGap,
+    WAEHeadTypeLinear,
+    WAEHeadTypeAtten,
+]
 
 
 def conv_head(activation: WAEActivationType, s: int, h: int) -> WAEHeadType:
     return WAEHeadTypeConv(type="conv", activation=activation, s=s, h=h)
+
+
+def gap_head(activation: WAEActivationType, s: int, d: int) -> WAEHeadType:
+    return WAEHeadTypeGap(type="gap", activation=activation, s=s, d=d)
 
 
 def linear_head(activation: WAEActivationType, s: int) -> WAEHeadType:
@@ -89,6 +106,12 @@ class WAENet(nn.Module):
                     activation_type=head_type.activation,
                     s=head_type.s,
                     h=head_type.h,
+                )
+            case WAEHeadTypeGap():
+                self.head = WAEGapHead(
+                    activation_type=head_type.activation,
+                    s=head_type.s,
+                    d=head_type.d,
                 )
             case WAEHeadTypeLinear():
                 self.head = WAELinearHead(
@@ -264,6 +287,30 @@ class WAEConvHead(nn.Module):
             nn.BatchNorm2d(64 * s * h),
             activation(activation_type),
             nn.Conv2d(64 * s * h, 64 * s, 1, stride=1),
+            nn.Flatten(),
+        )
+
+    def forward(self, h: torch.Tensor) -> tuple[torch.Tensor]:
+        return self.layers(h)
+
+
+class WAEGapHead(nn.Module):
+    def __init__(
+        self,
+        activation_type: WAEActivationType,
+        s: int,
+        d: int,
+    ) -> None:
+        super().__init__()
+
+        self.layers = nn.Sequential(
+            # --------------------
+            # shape: (64, 4, 4) -> (64, 1, 1)
+            # --------------------
+            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.BatchNorm2d(64 * s),
+            activation(activation_type),
+            nn.Conv2d(64 * s, 64 * d, 1, stride=1),
             nn.Flatten(),
         )
 
