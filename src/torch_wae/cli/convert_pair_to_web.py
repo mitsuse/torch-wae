@@ -8,6 +8,8 @@ import torchaudio
 import typer
 from torchaudio import functional as FA
 
+from torch_wae.network import Preprocess
+
 app = typer.Typer()
 
 
@@ -58,6 +60,7 @@ def main(
         batch_size=1,
         shuffle=False,
         num_workers=n_workers,
+        multiprocessing_context="fork",
     )
 
     output.mkdir(parents=True, exist_ok=True)
@@ -103,8 +106,6 @@ class Transform:
         resample_rate: int,
         durations: int,
     ) -> None:
-        from torch_wae.network import Preprocess
-
         super().__init__()
 
         self.__root = root
@@ -142,7 +143,7 @@ class Transform:
         durations = self.__durations
         preprocess = self.__preprocess
 
-        waveform, sample_rate = torchaudio.load(path)
+        waveform, sample_rate = torchaudio.load(str(path))
         waveform = torch.mean(waveform, dim=0).unsqueeze(0)
 
         if resample_rate != sample_rate:
