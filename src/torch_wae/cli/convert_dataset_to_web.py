@@ -29,6 +29,10 @@ def main(
         ...,
         help="the max number of examples for a shard.",
     ),
+    gzip: bool = typer.Option(
+        False,
+        help="compress shard files",
+    ),
     output: Path = typer.Option(
         ...,
         help="the output path of a directory which stores shards of WebDataset,",
@@ -61,7 +65,8 @@ def main(
     )
 
     output.mkdir(parents=True, exist_ok=True)
-    pattern = str(output / "%06d.tar")
+    ext = "tar.gz" if gzip else "tar"
+    pattern = str(output / f"%06d.{ext}")
 
     with tqdm(total=n) as progress:
         with ShardWriter(pattern, maxcount=max_examples, verbose=0) as w:
